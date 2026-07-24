@@ -2,6 +2,7 @@ from ghidra.program.model.symbol import SourceType
 
 names_path = "/home/l/ghidra_scripts/names.txt"
 not_found_path = "/home/l/ghidra_scripts/rename_not_found.txt"
+skip_suffixed = False
 
 def run():
     fm = currentProgram.getFunctionManager()
@@ -33,11 +34,19 @@ def run():
             current_name = func.getName()
             expected_prefix = "FUN_" + addr_str + "_"
             expected_plain = "FUN_" + addr_str
-            if current_name == expected_plain or current_name.startswith(expected_prefix):
+            if current_name == expected_plain:
                 try:
                     func.setName(line, SourceType.USER_DEFINED)
                 except Exception as e:
                     nf.write("%s -> RENAME ERROR: %s\n" % (line, str(e)))
+            elif current_name.startswith(expected_prefix):
+                if skip_suffixed:
+                    nf.write("%s -> SKIPPED SUFFIXED NAME: %s\n" % (line, current_name))
+                else:
+                    try:
+                        func.setName(line, SourceType.USER_DEFINED)
+                    except Exception as e:
+                        nf.write("%s -> RENAME ERROR: %s\n" % (line, str(e)))
             else:
                 nf.write("%s -> CURRENT NAME MISMATCH: %s\n" % (line, current_name))
 
